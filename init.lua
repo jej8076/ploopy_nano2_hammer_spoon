@@ -18,21 +18,23 @@ end
 
 esc_bind = hs.hotkey.new({}, 'escape', convert_to_eng_with_esc):enable()
 
--- F18 Drag Scroll Mode (v7 - hs.hotkey 사용)
+-- F18 Drag Scroll Mode (v9 - 커서 제한적 고정)
 local scrollMode = false
-local lastPos = nil
+local fixedPos = nil  -- 시작 위치 (일정 거리 벗어나면 돌아올 위치)
+local lastPos = nil   -- 이전 위치 (움직임 계산용)
 local scrollTimer = nil
 local accumulatedY = 0
 local accumulatedX = 0
+local WARP_DISTANCE = 50  -- 이 거리 이상 벗어나면 커서 되돌림
 
 local function startScrollMode()
     if scrollMode then return end
 
     scrollMode = true
-    lastPos = hs.mouse.absolutePosition()
+    fixedPos = hs.mouse.absolutePosition()
+    lastPos = fixedPos
     accumulatedY = 0
     accumulatedX = 0
-    hs.alert.show("SCROLL ON")
 
     scrollTimer = hs.timer.doEvery(0.01, function()
         if scrollMode and lastPos then
@@ -43,16 +45,23 @@ local function startScrollMode()
             accumulatedY = accumulatedY + dy
             accumulatedX = accumulatedX + dx
 
-            local scrollY = math.floor(accumulatedY / 5)
-            local scrollX = math.floor(accumulatedX / 5)
+            local scrollY = math.floor(accumulatedY / 7)
+            local scrollX = math.floor(accumulatedX / 7)
 
             if scrollY ~= 0 or scrollX ~= 0 then
                 hs.eventtap.scrollWheel({scrollX, scrollY}, {}, "line")
-                accumulatedY = accumulatedY - (scrollY * 5)
-                accumulatedX = accumulatedX - (scrollX * 5)
+                accumulatedY = accumulatedY - (scrollY * 7)
+                accumulatedX = accumulatedX - (scrollX * 7)
             end
 
-            lastPos = currentPos
+            -- 시작 위치에서 일정 거리 이상 벗어나면 되돌림
+            local distFromFixed = math.sqrt((currentPos.x - fixedPos.x)^2 + (currentPos.y - fixedPos.y)^2)
+            if distFromFixed > WARP_DISTANCE then
+                hs.mouse.absolutePosition(fixedPos)
+                lastPos = fixedPos
+            else
+                lastPos = currentPos
+            end
         end
     end)
 end
@@ -61,10 +70,10 @@ local function stopScrollMode()
     if not scrollMode then return end
 
     scrollMode = false
+    fixedPos = nil
     lastPos = nil
     accumulatedY = 0
     accumulatedX = 0
-    hs.alert.show("SCROLL OFF")
 
     if scrollTimer then
         scrollTimer:stop()
@@ -75,4 +84,4 @@ end
 -- F18 hotkey: pressedFn, releasedFn, repeatFn
 hs.hotkey.bind({}, "f18", startScrollMode, stopScrollMode, nil)
 
-hs.alert.show("Hammerspoon v7 ON")
+hs.alert.show("Hammerspoon v9 ON")
