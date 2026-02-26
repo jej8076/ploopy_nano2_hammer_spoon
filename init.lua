@@ -45,13 +45,13 @@ local function startScrollMode()
             accumulatedY = accumulatedY + dy
             accumulatedX = accumulatedX + dx
 
-            local scrollY = math.floor(accumulatedY / 7)
-            local scrollX = math.floor(accumulatedX / 7)
+            local scrollY = math.floor(accumulatedY / 5)
+            local scrollX = math.floor(accumulatedX / 5)
 
             if scrollY ~= 0 or scrollX ~= 0 then
                 hs.eventtap.scrollWheel({scrollX, scrollY}, {}, "line")
-                accumulatedY = accumulatedY - (scrollY * 7)
-                accumulatedX = accumulatedX - (scrollX * 7)
+                accumulatedY = accumulatedY - (scrollY * 5)
+                accumulatedX = accumulatedX - (scrollX * 5)
             end
 
             -- 시작 위치에서 일정 거리 이상 벗어나면 되돌림
